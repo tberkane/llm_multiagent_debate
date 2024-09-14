@@ -58,7 +58,7 @@ if __name__ == "__main__":
     rounds = args.rounds
 
     if args.debug:
-        print(f"Debug: Number of agents: {agents}, Number of rounds: {rounds}")
+        print(f"[DEBUG] Number of agents: {agents}, Number of rounds: {rounds}")
 
     model = AutoModelForCausalLM.from_pretrained(
         "microsoft/Phi-3-mini-4k-instruct",
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         answer = data["answer"]
 
         if args.debug:
-            print(f"\nDebug: Processing question: {question}...")
+            print(f"[DEBUG] Processing question: {question}")
 
         agent_contexts = [
             [
@@ -102,11 +102,11 @@ if __name__ == "__main__":
 
         for round in range(rounds):
             if args.debug:
-                print(f"Debug: Starting round {round + 1}")
+                print(f"[DEBUG] Starting round {round + 1}")
 
             for i, agent_context in enumerate(agent_contexts):
                 if args.debug:
-                    print(f"Debug: Processing agent {i + 1}")
+                    print(f"[DEBUG] Processing agent {i + 1}")
 
                 if round != 0:
                     agent_contexts_other = agent_contexts[:i] + agent_contexts[i + 1 :]
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 completion = pipe(agent_context, **generation_args)[0]["generated_text"]
 
                 if args.debug:
-                    print(f"Debug: Agent {i + 1} completion: {completion}...")
+                    print(f"[DEBUG] Agent {i + 1} completion: {completion}")
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
@@ -128,10 +128,4 @@ if __name__ == "__main__":
     json.dump(generated_description, open("gsm_{}_{}.json".format(agents, rounds), "w"))
 
     if args.debug:
-        print(f"Debug: Results saved to gsm_{agents}_{rounds}.json")
-
-    import pdb
-
-    pdb.set_trace()
-    print(answer)
-    print(agent_context)
+        print(f"[DEBUG] Results saved to gsm_{agents}_{rounds}.json")
