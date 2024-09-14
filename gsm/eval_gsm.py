@@ -157,6 +157,7 @@ if __name__ == "__main__":
 
         print(
             "accuracies:",
+            accuracies,
             np.mean(accuracies),
             np.std(accuracies) / (len(accuracies) ** 0.5),
         )
