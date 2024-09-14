@@ -116,6 +116,7 @@ if __name__ == "__main__":
                 print(
                     f"[DEBUG] Round {round + 1}, Current mean accuracy: {np.mean(accuracies[round])}"
                 )
+        print("-----------------------------------------")
 
     # Compute final statistics for each round
     for round in range(args.rounds):
