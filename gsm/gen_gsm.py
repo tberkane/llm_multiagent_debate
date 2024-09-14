@@ -1,11 +1,28 @@
-import openai
 import json
 import numpy as np
 import random
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import argparse
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rounds", default=2, type=int)
+    parser.add_argument("--num-agents", default=2, type=int)
+    parser.add_argument("--evaluation", default=100, type=int)
+    parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--temperature", default=0.7, type=float)
+    parser.add_argument("--debug", action="store_true", help="Enable debug prints")
+    return parser.parse_args()
+
 
 def construct_message(agents, question, idx):
     if len(agents) == 0:
-        return {"role": "user", "content": "Can you double check that your answer is correct. Please reiterate your answer, with your final answer a single numerical number, in the form \\boxed{{answer}}."}
+        return {
+            "role": "user",
+            "content": "Can you double check that your answer is correct. Please reiterate your answer, with your final answer a single numerical number, in the form \\boxed{{answer}}.",
+        }
 
     prefix_string = "These are the solutions to the problem from other agents: "
 
@@ -15,7 +32,12 @@ def construct_message(agents, question, idx):
 
         prefix_string = prefix_string + response
 
-    prefix_string = prefix_string + """\n\n Using the solutions from other agents as additional information, can you provide your answer to the math problem? \n The original math problem is {}. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response.""".format(question)
+    prefix_string = (
+        prefix_string
+        + """\n\n Using the solutions from other agents as additional information, can you provide your answer to the math problem? \n The original math problem is {}. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response.""".format(
+            question
+        )
+    )
     return {"role": "user", "content": prefix_string}
 
 
@@ -28,34 +50,64 @@ def read_jsonl(path: str):
     with open(path) as fh:
         return [json.loads(line) for line in fh.readlines() if line]
 
+
 if __name__ == "__main__":
-    agents = 3
-    rounds = 2
-    random.seed(0)
+    args = parse_arguments()
+    torch.random.manual_seed(args.seed)
+    random.seed(args.seed)
+    agents = args.num_agents
+    rounds = args.rounds
+
+    model = AutoModelForCausalLM.from_pretrained(
+        "microsoft/Phi-3-mini-4k-instruct",
+        device_map="cuda",
+        torch_dtype="auto",
+        trust_remote_code=True,
+    )
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
+    generation_args = {
+        "max_new_tokens": 500,
+        "return_full_text": False,
+        "do_sample": True,
+        "top_p": 0.95,
+        "temperature": args.temperature,
+    }
 
     generated_description = {}
 
-    questions = read_jsonl("/data/vision/billf/scratch/yilundu/llm_iterative_debate/grade-school-math/grade_school_math/data/test.jsonl")
+    questions = read_jsonl(
+        "/data/vision/billf/scratch/yilundu/llm_iterative_debate/grade-school-math/grade_school_math/data/test.jsonl"
+    )
     random.shuffle(questions)
 
-    for data in questions[:100]:
-        question = data['question']
-        answer = data['answer']
+    for data in questions[: args.evaluation]:
+        question = data["question"]
+        answer = data["answer"]
 
-        agent_contexts = [[{"role": "user", "content": """Can you solve the following math problem? {} Explain your reasoning. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response. """.format(question)}] for agent in range(agents)]
+        agent_contexts = [
+            [
+                {
+                    "role": "user",
+                    "content": """Can you solve the following math problem? {} Explain your reasoning. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response. """.format(
+                        question
+                    ),
+                }
+            ]
+            for agent in range(agents)
+        ]
 
         for round in range(rounds):
             for i, agent_context in enumerate(agent_contexts):
 
                 if round != 0:
-                    agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
-                    message = construct_message(agent_contexts_other, question, 2*round - 1)
+                    agent_contexts_other = agent_contexts[:i] + agent_contexts[i + 1 :]
+                    message = construct_message(
+                        agent_contexts_other, question, 2 * round - 1
+                    )
                     agent_context.append(message)
 
-                completion = openai.ChatCompletion.create(
-                          model="gpt-3.5-turbo-0301",
-                          messages=agent_context,
-                          n=1)
+                completion = pipe(agent_context, max_new_tokens=100)
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
@@ -65,6 +117,8 @@ if __name__ == "__main__":
     json.dump(generated_description, open("gsm_{}_{}.json".format(agents, rounds), "w"))
 
     import pdb
+
     pdb.set_trace()
     print(answer)
     print(agent_context)
+
