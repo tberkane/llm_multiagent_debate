@@ -76,9 +76,7 @@ if __name__ == "__main__":
 
     generated_description = {}
 
-    questions = read_jsonl(
-        "/data/vision/billf/scratch/yilundu/llm_iterative_debate/grade-school-math/grade_school_math/data/test.jsonl"
-    )
+    questions = read_jsonl("gsm8k_test.jsonl")
     random.shuffle(questions)
 
     for data in questions[: args.evaluation]:
@@ -121,4 +119,3 @@ if __name__ == "__main__":
     pdb.set_trace()
     print(answer)
     print(agent_context)
-
