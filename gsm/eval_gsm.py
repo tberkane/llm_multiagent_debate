@@ -80,8 +80,8 @@ if __name__ == "__main__":
         responses, gt = response_dict[question]
 
         if args.debug:
-            print(f"[DEBUG] Processing question {i}: {question}")
-            print(f"[DEBUG] Ground truth: {gt}")
+            print(f"\n[DEBUG] Processing question {i}: {question}")
+            print(f"[DEBUG] Ground truth: {gt.split('#')[-1].strip()}")
 
         for round in range(args.rounds):
             pred_solutions = []
