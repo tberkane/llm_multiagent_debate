@@ -9,6 +9,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--rounds", default=2, type=int)
     parser.add_argument("--num-agents", default=2, type=int)
+    parser.add_argument("--debug", action="store_true", help="Enable debug prints")
     return parser.parse_args()
 
 
@@ -137,23 +138,30 @@ if __name__ == "__main__":
     accuracies = []
 
     for question in questions:
+        if args.debug:
+            print(f"[DEBUG] Processing question: {question}")
+
         responses, gt = response_dict[question]
 
         pred_solutions = []
-        for response in responses:
+        for i, response in enumerate(responses):
             pred_solution = response[-1]["content"]
-
             pred_solutions.append(pred_solution)
+
+            if args.debug:
+                print(f"[DEBUG] Agent {i+1} solution: {pred_solution}")
 
         accurate = compute_accuracy(gt, pred_solutions)
 
         if accurate is not None:
             accuracies.append(float(accurate))
+            if args.debug:
+                print(f"[DEBUG] Accuracy for this question: {accurate}")
         else:
-            # import pdb
-            # pdb.set_trace()
             print("accurate is None")
             print(gt)
+            if args.debug:
+                print("[DEBUG] Failed to compute accuracy for this question")
 
         print(
             "accuracies:",
@@ -161,3 +169,9 @@ if __name__ == "__main__":
             np.mean(accuracies),
             np.std(accuracies) / (len(accuracies) ** 0.5),
         )
+
+        if args.debug:
+            print(f"[DEBUG] Current mean accuracy: {np.mean(accuracies)}")
+            print(
+                f"[DEBUG] Current standard error: {np.std(accuracies) / (len(accuracies) ** 0.5)}"
+            )
