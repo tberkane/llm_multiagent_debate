@@ -42,8 +42,7 @@ def construct_message(agents, question, idx):
 
 
 def construct_assistant_message(completion):
-    content = completion["choices"][0]["message"]["content"]
-    return {"role": "assistant", "content": content}
+    return {"role": "assistant", "content": completion}
 
 
 def read_jsonl(path: str):
@@ -105,7 +104,9 @@ if __name__ == "__main__":
                     )
                     agent_context.append(message)
 
-                completion = pipe(agent_context, max_new_tokens=100)
+                completion = pipe(agent_context, max_new_tokens=100)[0][
+                    "generated_text"
+                ]
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
