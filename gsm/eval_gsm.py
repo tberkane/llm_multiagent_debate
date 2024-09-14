@@ -130,9 +130,7 @@ def most_frequent(List):
 
 if __name__ == "__main__":
     args = parse_arguments()
-    response_dict = json.load(
-        open(f"gsm_debate_{args.num_agents}_{args.rounds}.json", "r")
-    )
+    response_dict = json.load(open(f"gsm_{args.num_agents}_{args.rounds}.json", "r"))
 
     questions = list(response_dict.keys())
 
