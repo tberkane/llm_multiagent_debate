@@ -1,8 +1,16 @@
 import json
-import openai
 import numpy as np
 import time
 import re
+import argparse
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rounds", default=2, type=int)
+    parser.add_argument("--num-agents", default=2, type=int)
+    return parser.parse_args()
+
 
 def parse_bullets(sentence):
     bullets_preprocess = sentence.split("\n")
@@ -51,6 +59,7 @@ def solve_math_problems(input_str):
         return matches[-1]
 
     return None
+
 
 def parse_answer(input_str):
     pattern = r"\{([0-9.,$]*)\}"
@@ -118,8 +127,12 @@ def most_frequent(List):
 
     return num
 
+
 if __name__ == "__main__":
-    response_dict = json.load(open("gsm_debate_3_3.json", "r"))
+    args = parse_arguments()
+    response_dict = json.load(
+        open(f"gsm_debate_{args.num_agents}_{args.rounds}.json", "r")
+    )
 
     questions = list(response_dict.keys())
 
@@ -130,7 +143,7 @@ if __name__ == "__main__":
 
         pred_solutions = []
         for response in responses:
-            pred_solution = response[-1]['content']
+            pred_solution = response[-1]["content"]
 
             pred_solutions.append(pred_solution)
 
@@ -139,9 +152,13 @@ if __name__ == "__main__":
         if accurate is not None:
             accuracies.append(float(accurate))
         else:
-            import pdb
-            pdb.set_trace()
+            # import pdb
+            # pdb.set_trace()
+            print("accurate is None")
             print(gt)
 
-        print("accuracies:", np.mean(accuracies), np.std(accuracies) / (len(accuracies) ** 0.5))
-
+        print(
+            "accuracies:",
+            np.mean(accuracies),
+            np.std(accuracies) / (len(accuracies) ** 0.5),
+        )
