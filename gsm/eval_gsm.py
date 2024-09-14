@@ -76,11 +76,11 @@ if __name__ == "__main__":
 
     accuracies = defaultdict(list)
 
-    for question in questions:
+    for i, question in enumerate(questions, 1):
         responses, gt = response_dict[question]
 
         if args.debug:
-            print(f"[DEBUG] Processing question: {question}")
+            print(f"[DEBUG] Processing question {i}: {question}")
             print(f"[DEBUG] Ground truth: {gt}")
 
         for round in range(args.rounds):
@@ -114,13 +114,7 @@ if __name__ == "__main__":
         if args.debug:
             for round in range(args.rounds):
                 print(
-                    f"[DEBUG] Round {round + 1}, Current accuracies: {accuracies[round]}"
-                )
-                print(
                     f"[DEBUG] Round {round + 1}, Current mean accuracy: {np.mean(accuracies[round])}"
-                )
-                print(
-                    f"[DEBUG] Round {round + 1}, Current standard error: {np.std(accuracies[round]) / (len(accuracies[round]) ** 0.5)}"
                 )
 
     # Compute final statistics for each round
@@ -129,7 +123,6 @@ if __name__ == "__main__":
         std_error = np.std(accuracies[round]) / (len(accuracies[round]) ** 0.5)
         print(f"Round {round + 1}:")
         print(f"  Mean Accuracy: {mean_accuracy}")
-        print(f"  Standard Error: {std_error}")
 
     # Save results to a JSON file
     results = {
