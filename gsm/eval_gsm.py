@@ -88,11 +88,14 @@ if __name__ == "__main__":
             for i, response in enumerate(responses):
                 # Every 2nd element contains a response for a different round
                 pred_solution = response[round * 2 + 1]["content"]
+                extracted_answer = parse_answer(pred_solution) or solve_math_problems(
+                    pred_solution
+                )
                 pred_solutions.append(pred_solution)
 
                 if args.debug:
                     print(
-                        f"[DEBUG] Round {round + 1}, Agent {i+1} solution: {pred_solution}"
+                        f"[DEBUG] Round {round + 1}, Agent {i+1} extracted answer: {extracted_answer}"
                     )
 
             accurate = compute_accuracy(gt, pred_solutions)
