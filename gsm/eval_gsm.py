@@ -138,11 +138,12 @@ if __name__ == "__main__":
     accuracies = []
 
     for question in questions:
+
+        responses, gt = response_dict[question]
+
         if args.debug:
             print(f"[DEBUG] Processing question: {question}")
             print(f"[DEBUG] Ground truth: {gt}")
-
-        responses, gt = response_dict[question]
 
         pred_solutions = []
         for i, response in enumerate(responses):
