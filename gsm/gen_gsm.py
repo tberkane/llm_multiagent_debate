@@ -104,9 +104,7 @@ if __name__ == "__main__":
                     )
                     agent_context.append(message)
 
-                completion = pipe(agent_context, max_new_tokens=100)[0][
-                    "generated_text"
-                ]
+                completion = pipe(agent_context, **generation_args)[0]["generated_text"]
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
