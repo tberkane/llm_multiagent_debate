@@ -86,7 +86,7 @@ if __name__ == "__main__":
         answer = data["answer"]
 
         if args.debug:
-            print(f"[DEBUG] Processing question: {question}")
+            print(f"[QUESTION] Processing question: {question}")
 
         agent_contexts = [
             [
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
         for round in range(rounds):
             if args.debug:
-                print(f"[DEBUG] Starting round {round + 1}")
+                print(f"[ROUND] Starting round {round + 1}")
 
             for i, agent_context in enumerate(agent_contexts):
                 if args.debug:
@@ -115,10 +115,11 @@ if __name__ == "__main__":
                     )
                     agent_context.append(message)
 
+                print(f"[CONTEXT] Agent {i + 1} context: {agent_context}")
                 completion = pipe(agent_context, **generation_args)[0]["generated_text"]
 
                 if args.debug:
-                    print(f"[DEBUG] Agent {i + 1} completion: {completion}")
+                    print(f"[ANSWER] Agent {i + 1} completion: {completion}")
 
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
