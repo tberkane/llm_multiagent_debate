@@ -24,20 +24,24 @@ def construct_message(agents, question, idx):
             "content": "Can you double check that your answer is correct. Please reiterate your answer, with your final answer a single numerical number, in the form \\boxed{{answer}}.",
         }
 
-    prefix_string = "These are the solutions to the problem from other agents: "
+    other_answers = "These are the solutions to the problem from other agents: "
 
     for agent in agents:
         agent_response = agent[idx]["content"]
-        response = "\n\n One agent solution: ```{}```".format(agent_response)
+        response = f"\n\n One agent solution: ```{agent_response}```"
+        other_answers += response
 
-        prefix_string = prefix_string + response
+    prefix_string = f"""
+You've already provided an answer to the math problem: {question}. Now, consider the following solutions from other LLMs:
+{other_answers}
+With this additional information:
 
-    prefix_string = (
-        prefix_string
-        + """\n\n Using the solutions from other agents as additional information, can you provide your answer to the math problem? \n The original math problem is {}. Your final answer should be a single numerical number, in the form \\boxed{{answer}}, at the end of your response.""".format(
-            question
-        )
-    )
+Critically analyze your original answer and the solutions from other LLMs.
+If you identify any errors in your initial solution or find merit in other approaches, revise your answer and explain your reasoning.
+If you still believe your original answer is correct, explain why, addressing any discrepancies with other solutions.
+
+Conclude with your final answer, either revised or reaffirmed, in the form \\boxed{{answer}}.
+"""
     return {"role": "user", "content": prefix_string}
 
 
@@ -88,6 +92,7 @@ if __name__ == "__main__":
         if args.debug:
             print(f"[QUESTION] Processing question: {question}")
 
+        # Initialize contexts for each agent
         agent_contexts = [
             [
                 {
@@ -100,14 +105,17 @@ if __name__ == "__main__":
             for agent in range(agents)
         ]
 
+        # Iterate through the specified number of rounds
         for round in range(rounds):
             if args.debug:
                 print(f"[ROUND] Starting round {round + 1}")
 
+            # Process each agent's context
             for i, agent_context in enumerate(agent_contexts):
                 if args.debug:
                     print(f"[DEBUG] Processing agent {i + 1}")
 
+                # For rounds after the first, add context from other agents
                 if round != 0:
                     agent_contexts_other = agent_contexts[:i] + agent_contexts[i + 1 :]
                     message = construct_message(
@@ -116,11 +124,13 @@ if __name__ == "__main__":
                     agent_context.append(message)
 
                 print(f"[CONTEXT] Agent {i + 1} context: {agent_context}")
+
                 completion = pipe(agent_context, **generation_args)[0]["generated_text"]
 
                 if args.debug:
                     print(f"[ANSWER] Agent {i + 1} completion: {completion}")
 
+                # Construct and append the assistant's message to the context
                 assistant_message = construct_assistant_message(completion)
                 agent_context.append(assistant_message)
 
