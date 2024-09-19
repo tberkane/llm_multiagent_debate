@@ -84,13 +84,12 @@ if __name__ == "__main__":
 
     questions = read_jsonl("gsm8k_test.jsonl")
     random.shuffle(questions)
-
-    for data in questions[: args.evaluation]:
+    for idx, data in enumerate(questions[: args.evaluation], start=1):
         question = data["question"]
         answer = data["answer"]
 
         if args.debug:
-            print(f"[QUESTION] Processing question: {question}")
+            print(f"[QUESTION {idx}] Processing question: {question}")
 
         # Initialize contexts for each agent
         agent_contexts = [
